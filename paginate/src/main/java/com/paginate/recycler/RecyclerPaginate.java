@@ -4,6 +4,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 
 import com.paginate.Paginate;
 
@@ -26,7 +27,7 @@ public final class RecyclerPaginate extends Paginate {
         this.loadingTriggerThreshold = loadingTriggerThreshold;
 
         // Attach scrolling listener in order to perform end offset check on each scroll event
-        recyclerView.addOnScrollListener(mOnScrollListener);
+        recyclerView.addOnScrollListener(mOnTopScrollListener);
 
         if (addLoadingListItem) {
             // Wrap existing adapter with new adapter that will add loading row
@@ -100,6 +101,32 @@ public final class RecyclerPaginate extends Paginate {
             }
         }
     }
+
+    void checkTopOffset() {
+        int firstVisibleItemPosition;
+
+        if (recyclerView.getLayoutManager() instanceof LinearLayoutManager) {
+            firstVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
+        } else {
+            firstVisibleItemPosition = 0;
+        }
+
+        if (firstVisibleItemPosition - loadingTriggerThreshold <= 0) {
+            Log.d(">>>>>", "true1");
+            if (!callbacks.isLoading() && !callbacks.hasLoadedAllItems()) {
+                callbacks.onLoadMore();
+                Log.d(">>>>>", "true2");
+            }
+        }
+    }
+
+    private final RecyclerView.OnScrollListener mOnTopScrollListener = new RecyclerView.OnScrollListener() {
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            checkTopOffset(); // Each time when list is scrolled check if end of the list is reached
+        }
+    };
+
 
     private void onAdapterDataChanged() {
         wrapperAdapter.displayLoadingRow(!callbacks.hasLoadedAllItems());
