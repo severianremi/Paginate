@@ -4,7 +4,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 
 import com.paginate.Paginate;
 
@@ -21,13 +20,14 @@ public final class RecyclerPaginate extends Paginate {
                      int loadingTriggerThreshold,
                      boolean addLoadingListItem,
                      LoadingListItemCreator loadingListItemCreator,
-                     LoadingListItemSpanLookup loadingListItemSpanLookup) {
+                     LoadingListItemSpanLookup loadingListItemSpanLookup,
+                     boolean isTopPaginate) {
         this.recyclerView = recyclerView;
         this.callbacks = callbacks;
         this.loadingTriggerThreshold = loadingTriggerThreshold;
 
         // Attach scrolling listener in order to perform end offset check on each scroll event
-        recyclerView.addOnScrollListener(mOnTopScrollListener);
+        recyclerView.addOnScrollListener((isTopPaginate) ? mOnTopScrollListener : mOnScrollListener);
 
         if (addLoadingListItem) {
             // Wrap existing adapter with new adapter that will add loading row
@@ -112,10 +112,8 @@ public final class RecyclerPaginate extends Paginate {
         }
 
         if (firstVisibleItemPosition - loadingTriggerThreshold <= 0) {
-            Log.d(">>>>>", "true1");
             if (!callbacks.isLoading() && !callbacks.hasLoadedAllItems()) {
                 callbacks.onLoadMore();
-                Log.d(">>>>>", "true2");
             }
         }
     }
@@ -187,6 +185,7 @@ public final class RecyclerPaginate extends Paginate {
         private boolean addLoadingListItem = true;
         private LoadingListItemCreator loadingListItemCreator;
         private LoadingListItemSpanLookup loadingListItemSpanLookup;
+        private boolean isTopPaginate = false;
 
         public Builder(RecyclerView recyclerView, Paginate.Callbacks callbacks) {
             this.recyclerView = recyclerView;
@@ -244,6 +243,12 @@ public final class RecyclerPaginate extends Paginate {
             return this;
         }
 
+        public Builder setTopPaginate(boolean isTopPaginate) {
+            this.isTopPaginate = isTopPaginate;
+            return this;
+        }
+
+
         /**
          * Create pagination functionality upon RecyclerView.
          *
@@ -266,7 +271,7 @@ public final class RecyclerPaginate extends Paginate {
             }
 
             return new RecyclerPaginate(recyclerView, callbacks, loadingTriggerThreshold, addLoadingListItem,
-                    loadingListItemCreator, loadingListItemSpanLookup);
+                    loadingListItemCreator, loadingListItemSpanLookup, isTopPaginate);
         }
     }
 
